@@ -49,7 +49,7 @@ pub fn add_configuration(cfg: &mut Cfg, sess: &mut Session, codegen_backend: &dy
 }
 
 pub static STACK_SIZE: OnceLock<usize> = OnceLock::new();
-pub const DEFAULT_STACK_SIZE: usize = 8 * 1024 * 1024;
+pub const DEFAULT_STACK_SIZE: usize = 32 * 1024 * 1024;
 
 fn init_stack_size(early_dcx: &EarlyDiagCtxt) -> usize {
     // Obey the environment setting or default
@@ -81,6 +81,17 @@ fn init_stack_size(early_dcx: &EarlyDiagCtxt) -> usize {
     })
 }
 
+#[cfg(target_family = "wasm")]
+fn run_in_thread_with_globals<F: FnOnce(CurrentGcx) -> R + Send, R: Send>(
+    _thread_stack_size: usize,
+    edition: Edition,
+    sm_inputs: SourceMapInputs,
+    f: F,
+) -> R {
+    rustc_span::create_session_globals_then(edition, Some(sm_inputs), || f(CurrentGcx::new()))
+}
+
+#[cfg(not(target_family = "wasm"))]
 fn run_in_thread_with_globals<F: FnOnce(CurrentGcx) -> R + Send, R: Send>(
     thread_stack_size: usize,
     edition: Edition,
@@ -247,6 +258,8 @@ pub fn get_codegen_backend(
             }
             #[cfg(feature = "llvm")]
             "llvm" => rustc_codegen_llvm::LlvmCodegenBackend::new,
+            #[cfg(feature = "cranelift")]
+            "cranelift" => rustc_codegen_cranelift::__rustc_codegen_backend,
             backend_name => get_codegen_sysroot(early_dcx, sysroot, backend_name),
         }
     });
