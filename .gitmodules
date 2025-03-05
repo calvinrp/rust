@@ -29,7 +29,6 @@
 [submodule "src/llvm-project"]
 	path = src/llvm-project
 	url = https://github.com/calvinrp/llvm-project
-    branch = 19-wasi
 	shallow = true
 [submodule "src/doc/embedded-book"]
 	path = src/doc/embedded-book
