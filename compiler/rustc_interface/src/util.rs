@@ -6,7 +6,7 @@ use std::{env, iter, thread};
 
 use rustc_ast as ast;
 use rustc_codegen_ssa::traits::CodegenBackend;
-use rustc_data_structures::sync;
+//use rustc_data_structures::sync;
 use rustc_metadata::{DylibError, load_symbol_from_dylib};
 use rustc_middle::ty::CurrentGcx;
 use rustc_parse::validate_attr;
@@ -127,7 +127,6 @@ fn run_in_thread_with_globals<F: FnOnce(CurrentGcx) -> R + Send, R: Send>(
 //    })
 //}
 
-//#[cfg(not(parallel_compiler))]
 pub(crate) fn run_in_thread_pool_with_globals<F: FnOnce(CurrentGcx) -> R + Send, R: Send>(
     thread_builder_diag: &EarlyDiagCtxt,
     edition: Edition,
@@ -139,7 +138,6 @@ pub(crate) fn run_in_thread_pool_with_globals<F: FnOnce(CurrentGcx) -> R + Send,
     run_in_thread_with_globals(thread_stack_size, edition, sm_inputs, f)
 }
 
-//#[cfg(parallel_compiler)]
 //pub(crate) fn run_in_thread_pool_with_globals<F: FnOnce(CurrentGcx) -> R + Send, R: Send>(
 //    thread_builder_diag: &EarlyDiagCtxt,
 //    edition: Edition,
