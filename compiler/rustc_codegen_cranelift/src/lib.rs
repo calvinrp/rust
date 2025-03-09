@@ -28,9 +28,9 @@ extern crate rustc_session;
 extern crate rustc_span;
 extern crate rustc_target;
 
-// This prevents duplicating functions and statics that are already part of the host rustc process.
-#[allow(unused_extern_crates)]
-extern crate rustc_driver;
+//// This prevents duplicating functions and statics that are already part of the host rustc process.
+//#[allow(unused_extern_crates)]
+//extern crate rustc_driver;
 
 use std::any::Any;
 use std::env;
@@ -355,7 +355,7 @@ fn build_isa(sess: &Session) -> Arc<dyn TargetIsa + 'static> {
 }
 
 /// This is the entrypoint for a hot plugged rustc_codegen_cranelift
-#[no_mangle]
+//#[no_mangle]
 pub fn __rustc_codegen_backend() -> Box<dyn CodegenBackend> {
     Box::new(CraneliftCodegenBackend { config: None })
 }
