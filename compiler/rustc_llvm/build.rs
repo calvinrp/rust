@@ -214,28 +214,16 @@ fn main() {
     }
 
     rerun_if_changed_anything_in_dir(Path::new("llvm-wrapper"));
-    if target.contains("wasi") {
-        cfg.file("llvm-wrapper/PassWrapper.cpp")
-            .file("llvm-wrapper/RustWrapper.cpp")
-            .file("llvm-wrapper/ArchiveWrapper.cpp")
-            .file("llvm-wrapper/CoverageMappingWrapper.cpp")
-            .file("llvm-wrapper/SymbolWrapper.cpp")
-            .file("llvm-wrapper/Linker.cpp")
-            .file("llvm-wrapper/LLD.cpp")
-            .cpp(true)
-            .cpp_link_stdlib(None) // we handle this below
-            .compile("llvm-wrapper");
-    } else {
-        cfg.file("llvm-wrapper/PassWrapper.cpp")
-            .file("llvm-wrapper/RustWrapper.cpp")
-            .file("llvm-wrapper/ArchiveWrapper.cpp")
-            .file("llvm-wrapper/CoverageMappingWrapper.cpp")
-            .file("llvm-wrapper/SymbolWrapper.cpp")
-            .file("llvm-wrapper/Linker.cpp")
-            .cpp(true)
-            .cpp_link_stdlib(None) // we handle this below
-            .compile("llvm-wrapper");
-    }
+    cfg.file("llvm-wrapper/PassWrapper.cpp")
+        .file("llvm-wrapper/RustWrapper.cpp")
+        .file("llvm-wrapper/ArchiveWrapper.cpp")
+        .file("llvm-wrapper/CoverageMappingWrapper.cpp")
+        .file("llvm-wrapper/SymbolWrapper.cpp")
+        .file("llvm-wrapper/Linker.cpp")
+        .file("llvm-wrapper/LLD.cpp")
+        .cpp(true)
+        .cpp_link_stdlib(None) // we handle this below
+        .compile("llvm-wrapper");
 
     let (llvm_kind, llvm_link_arg) = detect_llvm_link();
 
@@ -340,12 +328,10 @@ fn main() {
         println!("cargo:rustc-link-lib={kind}={name}");
     }
 
-    if target.contains("wasi") {
-        println!("cargo:rustc-link-lib=static=LLVMOption");
-        println!("cargo:rustc-link-lib=static=lldCommon");
-        println!("cargo:rustc-link-lib=static=lldELF");
-        println!("cargo:rustc-link-lib=static=lldWasm");
-    }
+    println!("cargo:rustc-link-lib=static=LLVMOption");
+    println!("cargo:rustc-link-lib=static=lldCommon");
+    println!("cargo:rustc-link-lib=static=lldELF");
+    println!("cargo:rustc-link-lib=static=lldWasm");
 
     // LLVM ldflags
     //
