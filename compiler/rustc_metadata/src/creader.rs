@@ -1,6 +1,6 @@
 //! Validates all used crates and extern libraries and loads their metadata
 
-#[cfg(not(target_family = "wasm"))]
+#[cfg(any(unix, windows))]
 use std::error::Error;
 
 use std::ops::Fn;
@@ -18,7 +18,10 @@ use rustc_data_structures::svh::Svh;
 use rustc_data_structures::sync::{self, FreezeReadGuard, FreezeWriteGuard};
 use rustc_errors::DiagCtxtHandle;
 use rustc_expand::base::SyntaxExtension;
+
+#[cfg(any(unix, windows))]
 use rustc_fs_util::try_canonicalize;
+
 use rustc_hir as hir;
 use rustc_hir::def_id::{CrateNum, LOCAL_CRATE, LocalDefId, StableCrateId};
 use rustc_hir::definitions::Definitions;
@@ -1164,11 +1167,12 @@ fn alloc_error_handler_spans(krate: &ast::Crate) -> Vec<Span> {
     f.spans
 }
 
-#[cfg(not(target_family = "wasm"))]
+#[cfg(any(unix, windows))]
 fn format_dlopen_err(e: &(dyn std::error::Error + 'static)) -> String {
     e.sources().map(|e| format!(": {e}")).collect()
 }
 
+#[cfg(any(unix, windows))]
 fn attempt_load_dylib(path: &Path) -> Result<libloading::Library, libloading::Error> {
     #[cfg(target_os = "aix")]
     if let Some(ext) = path.extension()
@@ -1196,7 +1200,7 @@ fn attempt_load_dylib(path: &Path) -> Result<libloading::Library, libloading::Er
 // proc-macro DLL with `Error::LoadLibraryExW`. It is suspected that something in the
 // system still holds a lock on the file, so we retry a few times before calling it
 // an error.
-#[cfg(not(target_family = "wasm"))]
+#[cfg(any(unix, windows))]
 fn load_dylib(path: &Path, max_attempts: usize) -> Result<libloading::Library, String> {
     assert!(max_attempts > 0);
 
@@ -1260,7 +1264,7 @@ impl From<DylibError> for CrateError {
     }
 }
 
-#[cfg(target_family = "wasm")]
+#[cfg(not(any(unix, windows)))]
 pub unsafe fn load_symbol_from_dylib<T: Copy>(
     path: &Path,
     _sym_name: &str,
@@ -1271,7 +1275,7 @@ pub unsafe fn load_symbol_from_dylib<T: Copy>(
     ))
 }
 
-#[cfg(not(target_family = "wasm"))]
+#[cfg(any(unix, windows))]
 pub unsafe fn load_symbol_from_dylib<T: Copy>(
     path: &Path,
     sym_name: &str,
