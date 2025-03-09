@@ -81,7 +81,7 @@ fn init_stack_size(early_dcx: &EarlyDiagCtxt) -> usize {
     })
 }
 
-#[cfg(target_family = "wasm")]
+//#[cfg(target_family = "wasm")]
 fn run_in_thread_with_globals<F: FnOnce(CurrentGcx) -> R + Send, R: Send>(
     _thread_stack_size: usize,
     edition: Edition,
@@ -91,42 +91,55 @@ fn run_in_thread_with_globals<F: FnOnce(CurrentGcx) -> R + Send, R: Send>(
     rustc_span::create_session_globals_then(edition, Some(sm_inputs), || f(CurrentGcx::new()))
 }
 
-#[cfg(not(target_family = "wasm"))]
-fn run_in_thread_with_globals<F: FnOnce(CurrentGcx) -> R + Send, R: Send>(
-    thread_stack_size: usize,
+//#[cfg(not(target_family = "wasm"))]
+//fn run_in_thread_with_globals<F: FnOnce(CurrentGcx) -> R + Send, R: Send>(
+//    thread_stack_size: usize,
+//    edition: Edition,
+//    sm_inputs: SourceMapInputs,
+//    f: F,
+//) -> R {
+//    // The "thread pool" is a single spawned thread in the non-parallel
+//    // compiler. We run on a spawned thread instead of the main thread (a) to
+//    // provide control over the stack size, and (b) to increase similarity with
+//    // the parallel compiler, in particular to ensure there is no accidental
+//    // sharing of data between the main thread and the compilation thread
+//    // (which might cause problems for the parallel compiler).
+//    let builder = thread::Builder::new().name("rustc".to_string()).stack_size(thread_stack_size);
+//
+//    // We build the session globals and run `f` on the spawned thread, because
+//    // `SessionGlobals` does not impl `Send` in the non-parallel compiler.
+//    thread::scope(|s| {
+//        // `unwrap` is ok here because `spawn_scoped` only panics if the thread
+//        // name contains null bytes.
+//        let r = builder
+//            .spawn_scoped(s, move || {
+//                rustc_span::create_session_globals_then(edition, Some(sm_inputs), || {
+//                    f(CurrentGcx::new())
+//                })
+//            })
+//            .unwrap()
+//            .join();
+//
+//        match r {
+//            Ok(v) => v,
+//            Err(e) => std::panic::resume_unwind(e),
+//        }
+//    })
+//}
+
+#[cfg(not(parallel_compiler))]
+pub(crate) fn run_in_thread_pool_with_globals<F: FnOnce(CurrentGcx) -> R + Send, R: Send>(
+    thread_builder_diag: &EarlyDiagCtxt,
     edition: Edition,
+    _threads: usize,
     sm_inputs: SourceMapInputs,
     f: F,
 ) -> R {
-    // The "thread pool" is a single spawned thread in the non-parallel
-    // compiler. We run on a spawned thread instead of the main thread (a) to
-    // provide control over the stack size, and (b) to increase similarity with
-    // the parallel compiler, in particular to ensure there is no accidental
-    // sharing of data between the main thread and the compilation thread
-    // (which might cause problems for the parallel compiler).
-    let builder = thread::Builder::new().name("rustc".to_string()).stack_size(thread_stack_size);
-
-    // We build the session globals and run `f` on the spawned thread, because
-    // `SessionGlobals` does not impl `Send` in the non-parallel compiler.
-    thread::scope(|s| {
-        // `unwrap` is ok here because `spawn_scoped` only panics if the thread
-        // name contains null bytes.
-        let r = builder
-            .spawn_scoped(s, move || {
-                rustc_span::create_session_globals_then(edition, Some(sm_inputs), || {
-                    f(CurrentGcx::new())
-                })
-            })
-            .unwrap()
-            .join();
-
-        match r {
-            Ok(v) => v,
-            Err(e) => std::panic::resume_unwind(e),
-        }
-    })
+    let thread_stack_size = init_stack_size(thread_builder_diag);
+    run_in_thread_with_globals(thread_stack_size, edition, sm_inputs, f)
 }
 
+#[cfg(parallel_compiler)]
 pub(crate) fn run_in_thread_pool_with_globals<F: FnOnce(CurrentGcx) -> R + Send, R: Send>(
     thread_builder_diag: &EarlyDiagCtxt,
     edition: Edition,
