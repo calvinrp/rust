@@ -127,7 +127,7 @@ fn run_in_thread_with_globals<F: FnOnce(CurrentGcx) -> R + Send, R: Send>(
 //    })
 //}
 
-#[cfg(not(parallel_compiler))]
+//#[cfg(not(parallel_compiler))]
 pub(crate) fn run_in_thread_pool_with_globals<F: FnOnce(CurrentGcx) -> R + Send, R: Send>(
     thread_builder_diag: &EarlyDiagCtxt,
     edition: Edition,
@@ -139,97 +139,97 @@ pub(crate) fn run_in_thread_pool_with_globals<F: FnOnce(CurrentGcx) -> R + Send,
     run_in_thread_with_globals(thread_stack_size, edition, sm_inputs, f)
 }
 
-#[cfg(parallel_compiler)]
-pub(crate) fn run_in_thread_pool_with_globals<F: FnOnce(CurrentGcx) -> R + Send, R: Send>(
-    thread_builder_diag: &EarlyDiagCtxt,
-    edition: Edition,
-    threads: usize,
-    sm_inputs: SourceMapInputs,
-    f: F,
-) -> R {
-    use std::process;
-
-    use rustc_data_structures::sync::FromDyn;
-    use rustc_data_structures::{defer, jobserver};
-    use rustc_middle::ty::tls;
-    use rustc_query_impl::QueryCtxt;
-    use rustc_query_system::query::{QueryContext, break_query_cycles};
-
-    let thread_stack_size = init_stack_size(thread_builder_diag);
-
-    let registry = sync::Registry::new(std::num::NonZero::new(threads).unwrap());
-
-    if !sync::is_dyn_thread_safe() {
-        return run_in_thread_with_globals(thread_stack_size, edition, sm_inputs, |current_gcx| {
-            // Register the thread for use with the `WorkerLocal` type.
-            registry.register();
-
-            f(current_gcx)
-        });
-    }
-
-    let current_gcx = FromDyn::from(CurrentGcx::new());
-    let current_gcx2 = current_gcx.clone();
-
-    let builder = rayon::ThreadPoolBuilder::new()
-        .thread_name(|_| "rustc".to_string())
-        .acquire_thread_handler(jobserver::acquire_thread)
-        .release_thread_handler(jobserver::release_thread)
-        .num_threads(threads)
-        .deadlock_handler(move || {
-            // On deadlock, creates a new thread and forwards information in thread
-            // locals to it. The new thread runs the deadlock handler.
-
-            // Get a `GlobalCtxt` reference from `CurrentGcx` as we cannot rely on having a
-            // `TyCtxt` TLS reference here.
-            let query_map = current_gcx2.access(|gcx| {
-                tls::enter_context(&tls::ImplicitCtxt::new(gcx), || {
-                    tls::with(|tcx| QueryCtxt::new(tcx).collect_active_jobs())
-                })
-            });
-            let query_map = FromDyn::from(query_map);
-            let registry = rayon_core::Registry::current();
-            thread::Builder::new()
-                .name("rustc query cycle handler".to_string())
-                .spawn(move || {
-                    let on_panic = defer(|| {
-                        eprintln!("query cycle handler thread panicked, aborting process");
-                        // We need to abort here as we failed to resolve the deadlock,
-                        // otherwise the compiler could just hang,
-                        process::abort();
-                    });
-                    break_query_cycles(query_map.into_inner(), &registry);
-                    on_panic.disable();
-                })
-                .unwrap();
-        })
-        .stack_size(thread_stack_size);
-
-    // We create the session globals on the main thread, then create the thread
-    // pool. Upon creation, each worker thread created gets a copy of the
-    // session globals in TLS. This is possible because `SessionGlobals` impls
-    // `Send` in the parallel compiler.
-    rustc_span::create_session_globals_then(edition, Some(sm_inputs), || {
-        rustc_span::with_session_globals(|session_globals| {
-            let session_globals = FromDyn::from(session_globals);
-            builder
-                .build_scoped(
-                    // Initialize each new worker thread when created.
-                    move |thread: rayon::ThreadBuilder| {
-                        // Register the thread for use with the `WorkerLocal` type.
-                        registry.register();
-
-                        rustc_span::set_session_globals_then(session_globals.into_inner(), || {
-                            thread.run()
-                        })
-                    },
-                    // Run `f` on the first thread in the thread pool.
-                    move |pool: &rayon::ThreadPool| pool.install(|| f(current_gcx.into_inner())),
-                )
-                .unwrap()
-        })
-    })
-}
+//#[cfg(parallel_compiler)]
+//pub(crate) fn run_in_thread_pool_with_globals<F: FnOnce(CurrentGcx) -> R + Send, R: Send>(
+//    thread_builder_diag: &EarlyDiagCtxt,
+//    edition: Edition,
+//    threads: usize,
+//    sm_inputs: SourceMapInputs,
+//    f: F,
+//) -> R {
+//    use std::process;
+//
+//    use rustc_data_structures::sync::FromDyn;
+//    use rustc_data_structures::{defer, jobserver};
+//    use rustc_middle::ty::tls;
+//    use rustc_query_impl::QueryCtxt;
+//    use rustc_query_system::query::{QueryContext, break_query_cycles};
+//
+//    let thread_stack_size = init_stack_size(thread_builder_diag);
+//
+//    let registry = sync::Registry::new(std::num::NonZero::new(threads).unwrap());
+//
+//    if !sync::is_dyn_thread_safe() {
+//        return run_in_thread_with_globals(thread_stack_size, edition, sm_inputs, |current_gcx| {
+//            // Register the thread for use with the `WorkerLocal` type.
+//            registry.register();
+//
+//            f(current_gcx)
+//        });
+//    }
+//
+//    let current_gcx = FromDyn::from(CurrentGcx::new());
+//    let current_gcx2 = current_gcx.clone();
+//
+//    let builder = rayon::ThreadPoolBuilder::new()
+//        .thread_name(|_| "rustc".to_string())
+//        .acquire_thread_handler(jobserver::acquire_thread)
+//        .release_thread_handler(jobserver::release_thread)
+//        .num_threads(threads)
+//        .deadlock_handler(move || {
+//            // On deadlock, creates a new thread and forwards information in thread
+//            // locals to it. The new thread runs the deadlock handler.
+//
+//            // Get a `GlobalCtxt` reference from `CurrentGcx` as we cannot rely on having a
+//            // `TyCtxt` TLS reference here.
+//            let query_map = current_gcx2.access(|gcx| {
+//                tls::enter_context(&tls::ImplicitCtxt::new(gcx), || {
+//                    tls::with(|tcx| QueryCtxt::new(tcx).collect_active_jobs())
+//                })
+//            });
+//            let query_map = FromDyn::from(query_map);
+//            let registry = rayon_core::Registry::current();
+//            thread::Builder::new()
+//                .name("rustc query cycle handler".to_string())
+//                .spawn(move || {
+//                    let on_panic = defer(|| {
+//                        eprintln!("query cycle handler thread panicked, aborting process");
+//                        // We need to abort here as we failed to resolve the deadlock,
+//                        // otherwise the compiler could just hang,
+//                        process::abort();
+//                    });
+//                    break_query_cycles(query_map.into_inner(), &registry);
+//                    on_panic.disable();
+//                })
+//                .unwrap();
+//        })
+//        .stack_size(thread_stack_size);
+//
+//    // We create the session globals on the main thread, then create the thread
+//    // pool. Upon creation, each worker thread created gets a copy of the
+//    // session globals in TLS. This is possible because `SessionGlobals` impls
+//    // `Send` in the parallel compiler.
+//    rustc_span::create_session_globals_then(edition, Some(sm_inputs), || {
+//        rustc_span::with_session_globals(|session_globals| {
+//            let session_globals = FromDyn::from(session_globals);
+//            builder
+//                .build_scoped(
+//                    // Initialize each new worker thread when created.
+//                    move |thread: rayon::ThreadBuilder| {
+//                        // Register the thread for use with the `WorkerLocal` type.
+//                        registry.register();
+//
+//                        rustc_span::set_session_globals_then(session_globals.into_inner(), || {
+//                            thread.run()
+//                        })
+//                    },
+//                    // Run `f` on the first thread in the thread pool.
+//                    move |pool: &rayon::ThreadPool| pool.install(|| f(current_gcx.into_inner())),
+//                )
+//                .unwrap()
+//        })
+//    })
+//}
 
 #[allow(rustc::untranslatable_diagnostic)] // FIXME: make this translatable
 fn load_backend_from_dylib(early_dcx: &EarlyDiagCtxt, path: &Path) -> MakeBackendFn {
