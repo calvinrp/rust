@@ -1,0 +1,122 @@
+## Includes one of the default files in src/bootstrap/defaults
+#profile = "compiler"
+#change-id = 99999999
+##change-id = 9999999
+#
+#[rust]
+#codegen-backends = ["llvm"]
+#deny-warnings = false
+#llvm-bitcode-linker = false
+#debug = false
+#debuginfo-level = 0
+#optimize = "s"
+#strip = true
+#codegen-units = 1
+#
+#[llvm]
+#static-libstdcpp = true
+#ninja = false
+#download-ci-llvm = false
+#link-shared = false
+#targets = "WebAssembly;AArch64;X86"
+##targets = "WebAssembly;X86"
+#experimental-targets = ""
+#optimize = true
+#
+#
+#[build]
+#docs = false
+#extended = false
+#tools = []
+##build = "aarch64-apple-darwin"
+#host = ["wasm32-wasip1-threads"]
+#target = ["wasm32-wasip1"]
+##target = ["x86_64-unknown-linux-gnu", "wasm32-wasip1"]
+#cargo-native-static = true
+##cargo = "/Users/calvinprewitt/.cargo/bin/cargo"
+##rustc = "/Users/calvinprewitt/.cargo/bin/rustc"
+##rustfmt = "/Users/calvinprewitt/.cargo/bin/rustfmt"
+##cargo-clippy = "/Users/calvinprewitt/.cargo/bin/cargo-clippy"
+#
+#[install]
+#prefix = "dist"
+#sysconfdir = "etc"
+#
+#[target.'wasm32-wasip2']
+#wasi-root = "wasi-sdk-25.0-arm64-macos/share/wasi-sysroot"
+#linker = "wasi-sdk-25.0-arm64-macos/bin/clang"
+#codegen-backends = ["llvm"]
+#
+#[target.'wasm32-wasip1']
+#wasi-root = "wasi-sdk-25.0-arm64-macos/share/wasi-sysroot"
+#linker = "wasi-sdk-25.0-arm64-macos/bin/clang"
+#codegen-backends = ["llvm"]
+#
+#[target.'wasm32-wasip1-threads']
+#wasi-root = "wasi-sdk-25.0-arm64-macos/share/wasi-sysroot"
+#linker = "wasi-sdk-25.0-arm64-macos/bin/clang"
+#codegen-backends = ["llvm"]
+#
+##[target.'x86_64-unknown-linux-gnu']
+##cc = "gcc"
+#
+#[target.'aarch64-apple-darwin']
+#cc = "gcc"
+
+
+# Includes one of the default files in src/bootstrap/defaults
+profile = "compiler"
+change-id = 9999999
+
+[rust]
+codegen-backends = ["llvm"]
+deny-warnings = false
+llvm-bitcode-linker = false
+debug = false
+debuginfo-level = 0
+
+[llvm]
+static-libstdcpp = true
+ninja = false
+download-ci-llvm = false
+link-shared = false
+targets = "WebAssembly"
+experimental-targets = ""
+
+[build]
+docs = false
+extended = false
+tools = []
+host = ["wasm32-wasip1-threads"]
+target = ["wasm32-wasip1"]
+#target = ["x86_64-unknown-linux-gnu", "wasm32-wasip1", "aarch64-apple-darwin"]
+cargo-native-static = true
+#cargo = "/Users/calvinprewitt/.cargo/bin/cargo"
+#rustc = "/Users/calvinprewitt/.cargo/bin/rustc"
+#rustfmt = "/Users/calvinprewitt/.cargo/bin/rustfmt"
+#cargo-clippy = "/Users/calvinprewitt/.cargo/bin/cargo-clippy"
+
+[install]
+prefix = "dist"
+sysconfdir = "etc"
+
+[target.'wasm32-wasip1']
+#wasi-root = "wasi-sdk-24.0-x86_64-linux/share/wasi-sysroot"
+#linker = "wasi-sdk-24.0-x86_64-linux/bin/clang"
+wasi-root = "wasi-sdk-25.0-arm64-macos/share/wasi-sysroot"
+linker = "wasi-sdk-25.0-arm64-macos/bin/clang"
+codegen-backends = ["llvm"]
+
+[target.'wasm32-wasip1-threads']
+#wasi-root = "wasi-sdk-24.0-x86_64-linux/share/wasi-sysroot"
+#linker = "wasi-sdk-24.0-x86_64-linux/bin/clang"
+wasi-root = "wasi-sdk-25.0-arm64-macos/share/wasi-sysroot"
+linker = "wasi-sdk-25.0-arm64-macos/bin/clang"
+codegen-backends = ["llvm"]
+
+[target.'x86_64-unknown-linux-gnu']
+cc = "gcc"
+
+[target.'aarch64-apple-darwin']
+cc = "gcc"
+

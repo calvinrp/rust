@@ -25,7 +25,7 @@ use rustc_session::Session;
 use rustc_session::config::{DebugInfo, OutFileName, OutputFilenames, OutputType};
 
 use crate::BackendConfig;
-use crate::concurrency_limiter::{ConcurrencyLimiter, ConcurrencyLimiterToken};
+//use crate::concurrency_limiter::{ConcurrencyLimiter, ConcurrencyLimiterToken};
 use crate::debuginfo::TypeDebugContext;
 use crate::global_asm::GlobalAsmConfig;
 use crate::prelude::*;
@@ -54,7 +54,7 @@ pub(crate) struct OngoingCodegen {
     metadata_module: Option<CompiledModule>,
     metadata: EncodedMetadata,
     crate_info: CrateInfo,
-    concurrency_limiter: ConcurrencyLimiter,
+    //concurrency_limiter: ConcurrencyLimiter,
 }
 
 impl OngoingCodegen {
@@ -115,7 +115,7 @@ impl OngoingCodegen {
             }
         }
 
-        self.concurrency_limiter.finished();
+        //self.concurrency_limiter.finished();
 
         sess.dcx().abort_if_errors();
 
@@ -482,11 +482,11 @@ fn reuse_workproduct_for_cgu(
 
 fn module_codegen(
     tcx: TyCtxt<'_>,
-    (backend_config, global_asm_config, cgu_name, token): (
+    (backend_config, global_asm_config, cgu_name/*, token*/): (
         BackendConfig,
         Arc<GlobalAsmConfig>,
         rustc_span::Symbol,
-        ConcurrencyLimiterToken,
+        //ConcurrencyLimiterToken,
     ),
 ) -> OngoingModuleCodegen {
     let (cgu_name, mut cx, mut module, codegened_functions) =
@@ -601,7 +601,7 @@ pub(crate) fn run_aot(
             metadata_module: None,
             metadata,
             crate_info: CrateInfo::new(tcx, target_cpu),
-            concurrency_limiter: ConcurrencyLimiter::new(tcx.sess, 0),
+            //concurrency_limiter: ConcurrencyLimiter::new(tcx.sess, 0),
         });
     };
 
@@ -632,7 +632,7 @@ pub(crate) fn run_aot(
             CguReuse::PreLto | CguReuse::PostLto => false,
         });
 
-    let concurrency_limiter = IntoDynSyncSend(ConcurrencyLimiter::new(tcx.sess, todo_cgus.len()));
+    //let concurrency_limiter = IntoDynSyncSend(ConcurrencyLimiter::new(tcx.sess, todo_cgus.len()));
 
     let modules = tcx.sess.time("codegen mono items", || {
         let mut modules: Vec<_> = par_map(todo_cgus, |(_, cgu)| {
@@ -645,7 +645,7 @@ pub(crate) fn run_aot(
                         backend_config.clone(),
                         global_asm_config.clone(),
                         cgu.name(),
-                        concurrency_limiter.acquire(tcx.dcx()),
+                        //concurrency_limiter.acquire(tcx.dcx()),
                     ),
                     module_codegen,
                     Some(rustc_middle::dep_graph::hash_result),
@@ -723,6 +723,6 @@ pub(crate) fn run_aot(
         metadata_module,
         metadata,
         crate_info: CrateInfo::new(tcx, target_cpu),
-        concurrency_limiter: concurrency_limiter.0,
+        //concurrency_limiter: concurrency_limiter.0,
     })
 }
