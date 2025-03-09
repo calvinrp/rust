@@ -1243,7 +1243,7 @@ impl Step for Lld {
             // `$ORIGIN` would otherwise be expanded when the `LdFlags` are passed verbatim to
             // cmake.
             ldflags.push_all("-Wl,-rpath,'$ORIGIN/../../../'");
-        } else if target.contains("wasi") {
+        } else {
             // CMake defaults to building executables with rpath enabled.
             cfg.define("CMAKE_SKIP_RPATH", "ON");
         }
