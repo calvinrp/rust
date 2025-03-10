@@ -12,7 +12,9 @@ optimize = "s"
 strip = true
 codegen-units = 1
 codegen-units-std = 1
+llvm-tools = false
 channel = "stable"
+#lto = "thin"
 
 [llvm]
 static-libstdcpp = true
@@ -26,6 +28,8 @@ targets = "AArch64;WebAssembly"
 #targets = "WebAssembly;X86"
 experimental-targets = ""
 optimize = true
+release-debuginfo = false
+#thin-lto = true
 
 [build]
 docs = false
